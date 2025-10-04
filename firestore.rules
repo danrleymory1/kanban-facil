@@ -1,0 +1,288 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // FUNÇÕES AUXILIARES
+    // ========================================
+
+    // Verifica se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verifica se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verifica se o usuário é membro do board
+    function isBoardMember(boardId) {
+      return isAuthenticated() &&
+        request.auth.uid in get(/databases/$(database)/documents/boards/$(boardId)).data.membros.userId;
+    }
+
+    // Verifica se o usuário é admin do board
+    function isBoardAdmin(boardId) {
+      let board = get(/databases/$(database)/documents/boards/$(boardId)).data;
+      let member = board.membros[request.auth.uid];
+      return isAuthenticated() && member != null && member.papel == 'admin';
+    }
+
+    // Verifica se o usuário pode editar o board (admin ou editor)
+    function canEditBoard(boardId) {
+      let board = get(/databases/$(database)/documents/boards/$(boardId)).data;
+      let userInMembros = board.membros.hasAny([request.auth.uid]);
+
+      if (!userInMembros) return false;
+
+      let memberData = board.membros.filter(m => m.userId == request.auth.uid)[0];
+      return memberData.papel in ['admin', 'editor'];
+    }
+
+    // Verifica campos obrigatórios
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ========================================
+    // USERS - Usuários
+    // ========================================
+
+    match /users/{userId} {
+      // Usuário pode ler e escrever apenas seus próprios dados
+      allow read: if isAuthenticated() && isOwner(userId);
+
+      allow create: if isAuthenticated() &&
+        isOwner(userId) &&
+        hasRequiredFields(['userId', 'nome', 'isAnonymous', 'createdAt', 'updatedAt']);
+
+      allow update: if isAuthenticated() &&
+        isOwner(userId) &&
+        // Não pode alterar userId
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // ========================================
+    // BOARDS - Quadros
+    // ========================================
+
+    match /boards/{boardId} {
+      // Pode ler se for membro do board ou se for público
+      allow read: if isAuthenticated() && (
+        isBoardMember(boardId) ||
+        resource.data.visibilidade == 'publico'
+      );
+
+      // Apenas usuários autenticados podem criar boards
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['userId', 'nome', 'membros', 'visibilidade', 'createdAt', 'updatedAt']) &&
+        isOwner(request.resource.data.userId);
+
+      // Pode atualizar se for membro com permissão de edição
+      allow update: if isAuthenticated() && (
+        canEditBoard(boardId) ||
+        // Permite atualizar favorito apenas para si mesmo
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favorito', 'updatedAt']) &&
+         isBoardMember(boardId))
+      );
+
+      // Apenas admin ou dono pode deletar
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        isBoardAdmin(boardId)
+      );
+    }
+
+    // ========================================
+    // LISTS - Listas
+    // ========================================
+
+    match /lists/{listId} {
+      // Pode ler se for membro do board
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+
+      // Pode criar se for membro editor do board
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['boardId', 'nome', 'ordem', 'createdAt', 'updatedAt']) &&
+        canEditBoard(request.resource.data.boardId);
+
+      // Pode atualizar se for membro editor
+      allow update: if isAuthenticated() &&
+        canEditBoard(resource.data.boardId) &&
+        // Não pode alterar o boardId
+        request.resource.data.boardId == resource.data.boardId;
+
+      // Pode deletar se for membro editor
+      allow delete: if isAuthenticated() && canEditBoard(resource.data.boardId);
+    }
+
+    // ========================================
+    // CARDS - Cartões
+    // ========================================
+
+    match /cards/{cardId} {
+      // Pode ler se for membro do board
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+
+      // Pode criar se for membro editor do board
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['boardId', 'listId', 'nome', 'ordem', 'prioridade', 'status', 'tipo', 'criadoPor', 'createdAt', 'updatedAt']) &&
+        canEditBoard(request.resource.data.boardId) &&
+        isOwner(request.resource.data.criadoPor);
+
+      // Pode atualizar se for membro editor ou responsável pelo card
+      allow update: if isAuthenticated() && (
+        canEditBoard(resource.data.boardId) ||
+        isOwner(resource.data.responsavel)
+      ) &&
+        // Não pode alterar boardId e criadoPor
+        request.resource.data.boardId == resource.data.boardId &&
+        request.resource.data.criadoPor == resource.data.criadoPor;
+
+      // Pode deletar se for membro editor ou criador
+      allow delete: if isAuthenticated() && (
+        canEditBoard(resource.data.boardId) ||
+        isOwner(resource.data.criadoPor)
+      );
+    }
+
+    // ========================================
+    // KNOWLEDGE BASES - Base de Conhecimento
+    // ========================================
+
+    match /knowledgeBases/{kbId} {
+      // Pode ler se for público, ou se for o dono, ou membro do board vinculado
+      allow read: if isAuthenticated() && (
+        resource.data.publico == true ||
+        isOwner(resource.data.userId) ||
+        (resource.data.boardId != null && isBoardMember(resource.data.boardId))
+      );
+
+      // Pode criar se estiver autenticado
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['userId', 'titulo', 'conteudo', 'createdAt', 'updatedAt']) &&
+        isOwner(request.resource.data.userId);
+
+      // Pode atualizar se for o dono ou um dos autores
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        request.auth.uid in resource.data.autores
+      ) &&
+        // Não pode alterar userId original
+        request.resource.data.userId == resource.data.userId;
+
+      // Pode deletar se for o dono
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // SPRINTS - Sprints
+    // ========================================
+
+    match /sprints/{sprintId} {
+      // Pode ler se for membro do board
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+
+      // Pode criar se for membro editor do board
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['boardId', 'nome', 'dataInicio', 'dataFim', 'status', 'createdAt', 'updatedAt']) &&
+        canEditBoard(request.resource.data.boardId);
+
+      // Pode atualizar se for membro editor
+      allow update: if isAuthenticated() &&
+        canEditBoard(resource.data.boardId) &&
+        request.resource.data.boardId == resource.data.boardId;
+
+      // Pode deletar se for admin do board
+      allow delete: if isAuthenticated() && isBoardAdmin(resource.data.boardId);
+    }
+
+    // ========================================
+    // TASKS - Tarefas
+    // ========================================
+
+    match /tasks/{taskId} {
+      // Pode ler se for membro do board
+      allow read: if isAuthenticated() && isBoardMember(resource.data.boardId);
+
+      // Pode criar se for membro do board
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['boardId', 'userId', 'titulo', 'tipo', 'status', 'prioridade', 'createdAt', 'updatedAt']) &&
+        isBoardMember(request.resource.data.boardId) &&
+        isOwner(request.resource.data.userId);
+
+      // Pode atualizar se for membro editor ou responsável
+      allow update: if isAuthenticated() && (
+        canEditBoard(resource.data.boardId) ||
+        isOwner(resource.data.responsavel)
+      );
+
+      // Pode deletar se for criador ou admin do board
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.userId) ||
+        isBoardAdmin(resource.data.boardId)
+      );
+    }
+
+    // ========================================
+    // NOTIFICATIONS - Notificações
+    // ========================================
+
+    match /notifications/{notificationId} {
+      // Usuário só pode ler suas próprias notificações
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+
+      // Qualquer usuário autenticado pode criar notificações
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['userId', 'tipo', 'titulo', 'mensagem', 'lida', 'arquivada', 'createdAt']);
+
+      // Usuário pode atualizar suas próprias notificações (marcar como lida, etc)
+      allow update: if isAuthenticated() &&
+        isOwner(resource.data.userId) &&
+        // Não pode alterar userId
+        request.resource.data.userId == resource.data.userId;
+
+      // Usuário pode deletar suas próprias notificações
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // TEMPLATES - Templates
+    // ========================================
+
+    match /templates/{templateId} {
+      // Pode ler se for público ou se for o criador
+      allow read: if isAuthenticated() && (
+        resource.data.publico == true ||
+        (resource.data.userId != null && isOwner(resource.data.userId))
+      );
+
+      // Pode criar se estiver autenticado
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['nome', 'descricao', 'categoria', 'listas', 'publico', 'vezesUtilizado', 'createdAt', 'updatedAt']);
+
+      // Pode atualizar se for o criador (ou admin para templates públicos)
+      allow update: if isAuthenticated() && (
+        (resource.data.userId != null && isOwner(resource.data.userId))
+        // TODO: Adicionar verificação de admin global
+      );
+
+      // Pode deletar se for o criador
+      allow delete: if isAuthenticated() &&
+        (resource.data.userId != null && isOwner(resource.data.userId));
+    }
+
+    // ========================================
+    // NEGAÇÃO PADRÃO
+    // ========================================
+
+    // Todas as outras operações são negadas por padrão
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
