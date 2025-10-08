@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/types';
-import { updateCard, deleteCard } from '@/services/firestore.service';
+import { Card, StatusCardType, PrioridadeType, TipoAtividadeType } from '@/types';
+import { updateCard, deleteCard } from '@/services/api.service';
 import { useAuth } from '@/contexts/AuthContext';
+import CommentSection from '@/components/comments/CommentSection';
 import {
   AiOutlineClose,
   AiOutlineCheckSquare,
@@ -11,8 +12,10 @@ import {
   AiOutlineUser,
   AiOutlineTag,
   AiOutlineFileText,
+  AiOutlineSave,
 } from 'react-icons/ai';
-import { FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiAlertTriangle, FiArrowUp, FiMinus, FiArrowDown } from 'react-icons/fi';
+import { MdPlayCircleOutline, MdCheckCircle, MdRemoveRedEye, MdBlock, MdPerson, MdAccessTime } from 'react-icons/md';
 import dayjs from 'dayjs';
 
 interface CardModalProps {
@@ -33,6 +36,21 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
     storyPoints: card.storyPoints,
   });
   const [saving, setSaving] = useState(false);
+
+  const getPriorityIcon = (prioridade: string) => {
+    switch (prioridade) {
+      case 'urgente':
+        return <FiAlertTriangle className="text-[var(--error)]" />;
+      case 'alta':
+        return <FiArrowUp className="text-[var(--warning)]" />;
+      case 'media':
+        return <FiMinus className="text-yellow-500" />;
+      case 'baixa':
+        return <FiArrowDown className="text-[var(--success)]" />;
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
     // Prevent scrolling quando modal está aberto
@@ -65,7 +83,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
     }
   };
 
-  const handleQuickUpdate = async (field: string, value: any) => {
+  const handleQuickUpdate = async (field: string, value: string | number | boolean | Date | string[]) => {
     try {
       await updateCard(card.cardId, { [field]: value });
     } catch (error) {
@@ -75,31 +93,34 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex items-start justify-between">
+        <div className="p-6 border-b border-[var(--border-primary)] flex items-start justify-between">
           <div className="flex-1">
             {isEditing ? (
               <input
                 type="text"
                 value={cardData.nome}
                 onChange={(e) => setCardData({ ...cardData, nome: e.target.value })}
-                className="text-2xl font-bold text-gray-900 border-b-2 border-blue-500 focus:outline-none w-full"
+                className="text-2xl font-bold text-[var(--content-primary)] bg-[var(--surface-secondary)] border-b-2 border-[var(--primary)] focus:outline-none w-full px-2 py-1"
                 autoFocus
               />
             ) : (
-              <h2 className="text-2xl font-bold text-gray-900">{card.nome}</h2>
+              <div className="flex items-center gap-3">
+                {getPriorityIcon(card.prioridade)}
+                <h2 className="text-2xl font-bold text-[var(--content-primary)]">{card.nome}</h2>
+              </div>
             )}
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-[var(--content-secondary)] mt-1">
               na lista{' '}
               <span className="font-medium">Lista</span>
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-md transition"
+            className="p-2 hover:bg-[var(--surface-secondary)] rounded-md transition"
           >
-            <AiOutlineClose className="text-xl text-gray-600" />
+            <AiOutlineClose className="text-xl text-[var(--content-secondary)]" />
           </button>
         </div>
 
@@ -108,17 +129,18 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
           {/* Status, Prioridade, Tipo */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-2">
+                <MdPlayCircleOutline />
                 Status
               </label>
               <select
                 value={cardData.status}
                 onChange={(e) => {
-                  const newStatus = e.target.value as any;
+                  const newStatus = e.target.value as StatusCardType;
                   setCardData({ ...cardData, status: newStatus });
                   handleQuickUpdate('status', newStatus);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               >
                 <option value="aberto">Aberto</option>
                 <option value="em-progresso">Em Progresso</option>
@@ -129,17 +151,18 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-2">
+                {getPriorityIcon(cardData.prioridade)}
                 Prioridade
               </label>
               <select
                 value={cardData.prioridade}
                 onChange={(e) => {
-                  const newPrioridade = e.target.value as any;
+                  const newPrioridade = e.target.value as PrioridadeType;
                   setCardData({ ...cardData, prioridade: newPrioridade });
                   handleQuickUpdate('prioridade', newPrioridade);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
@@ -149,17 +172,18 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-2">
+                <AiOutlineTag />
                 Tipo
               </label>
               <select
                 value={cardData.tipo}
                 onChange={(e) => {
-                  const newTipo = e.target.value as any;
+                  const newTipo = e.target.value as TipoAtividadeType;
                   setCardData({ ...cardData, tipo: newTipo });
                   handleQuickUpdate('tipo', newTipo);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               >
                 <option value="feature">Feature</option>
                 <option value="bug">Bug</option>
@@ -173,7 +197,8 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
 
           {/* Story Points */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-2">
+              <AiOutlineCheckSquare />
               Story Points
             </label>
             <input
@@ -186,7 +211,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                 setCardData({ ...cardData, storyPoints: value });
                 handleQuickUpdate('storyPoints', value);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="Pontos de história (Scrum)"
             />
           </div>
@@ -194,15 +219,16 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
           {/* Descrição */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)]">
                 <AiOutlineFileText />
                 Descrição
               </label>
               {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-1 text-sm text-[var(--primary)] hover:opacity-80"
                 >
+                  <FiEdit2 />
                   Editar
                 </button>
               )}
@@ -212,7 +238,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                 <textarea
                   value={cardData.descricao}
                   onChange={(e) => setCardData({ ...cardData, descricao: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
                   rows={6}
                   placeholder="Adicione uma descrição mais detalhada..."
                 />
@@ -220,8 +246,9 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:opacity-90 disabled:opacity-50"
                   >
+                    <AiOutlineSave />
                     {saving ? 'Salvando...' : 'Salvar'}
                   </button>
                   <button
@@ -233,45 +260,58 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                         prioridade: card.prioridade,
                         status: card.status,
                         tipo: card.tipo,
+                        storyPoints: card.storyPoints,
                       });
                     }}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-[var(--content-secondary)] hover:bg-[var(--surface-secondary)] rounded-md"
                   >
                     Cancelar
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-[100px]">
+              <div className="text-[var(--content-primary)] whitespace-pre-wrap bg-[var(--surface-secondary)] p-4 rounded-md min-h-[100px] border border-[var(--border-secondary)]">
                 {card.descricao || 'Nenhuma descrição fornecida.'}
               </div>
             )}
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-2 gap-4 p-4 bg-[var(--surface-secondary)] border border-[var(--border-secondary)] rounded-lg">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Criado por</p>
-              <p className="font-medium">{card.criadoPorNome || 'Desconhecido'}</p>
+              <p className="flex items-center gap-2 text-sm text-[var(--content-tertiary)] mb-1">
+                <MdPerson />
+                Criado por
+              </p>
+              <p className="font-medium text-[var(--content-primary)]">{card.criadoPorNome || 'Desconhecido'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">Criado em</p>
-              <p className="font-medium">
-                {dayjs(card.createdAt.toDate()).format('DD/MM/YYYY HH:mm')}
+              <p className="flex items-center gap-2 text-sm text-[var(--content-tertiary)] mb-1">
+                <MdAccessTime />
+                Criado em
+              </p>
+              <p className="font-medium text-[var(--content-primary)]">
+                {dayjs(card.createdAt).format('DD/MM/YYYY HH:mm')}
               </p>
             </div>
             {card.dataVencimento && (
               <div>
-                <p className="text-sm text-gray-600 mb-1">Vencimento</p>
-                <p className="font-medium">
-                  {dayjs(card.dataVencimento.toDate()).format('DD/MM/YYYY')}
+                <p className="flex items-center gap-2 text-sm text-[var(--content-tertiary)] mb-1">
+                  <AiOutlineClockCircle />
+                  Vencimento
+                </p>
+                <p className="font-medium text-[var(--content-primary)]">
+                  {dayjs(card.dataVencimento).format('DD/MM/YYYY')}
                 </p>
               </div>
             )}
             {card.responsavelNome && (
               <div>
-                <p className="text-sm text-gray-600 mb-1">Responsável</p>
-                <p className="font-medium">{card.responsavelNome}</p>
+                <p className="flex items-center gap-2 text-sm text-[var(--content-tertiary)] mb-1">
+                  <AiOutlineUser />
+                  Responsável
+                </p>
+                <p className="font-medium text-[var(--content-primary)]">{card.responsavelNome}</p>
               </div>
             )}
           </div>
@@ -279,7 +319,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
           {/* Checklists */}
           {card.checklists && card.checklists.length > 0 && (
             <div>
-              <h3 className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-3">
                 <AiOutlineCheckSquare />
                 Checklists
               </h3>
@@ -290,16 +330,16 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                   const percentage = total > 0 ? (completed / total) * 100 : 0;
 
                   return (
-                    <div key={checklist.checklistId} className="border border-gray-200 rounded-lg p-4">
+                    <div key={checklist.checklistId} className="border border-[var(--border-primary)] bg-[var(--surface-secondary)] rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{checklist.titulo}</h4>
-                        <span className="text-sm text-gray-600">
+                        <h4 className="font-medium text-[var(--content-primary)]">{checklist.titulo}</h4>
+                        <span className="text-sm text-[var(--content-tertiary)]">
                           {completed}/{total}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                      <div className="w-full bg-[var(--surface-tertiary)] rounded-full h-2 mb-3">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          className="bg-[var(--primary)] h-2 rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -310,11 +350,11 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                               type="checkbox"
                               checked={item.concluido}
                               readOnly
-                              className="w-4 h-4 text-blue-600 rounded"
+                              className="w-4 h-4 accent-[var(--primary)] rounded"
                             />
                             <span
                               className={`text-sm ${
-                                item.concluido ? 'line-through text-gray-500' : 'text-gray-900'
+                                item.concluido ? 'line-through text-[var(--content-tertiary)]' : 'text-[var(--content-primary)]'
                               }`}
                             >
                               {item.texto}
@@ -332,7 +372,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
           {/* Tags */}
           {card.tags && card.tags.length > 0 && (
             <div>
-              <h3 className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-[var(--content-secondary)] mb-3">
                 <AiOutlineTag />
                 Tags
               </h3>
@@ -340,7 +380,7 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
                 {card.tags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                    className="px-3 py-1 bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] border border-[var(--primary)] border-opacity-20 rounded-full text-sm"
                   >
                     {tag}
                   </span>
@@ -350,17 +390,23 @@ export default function CardModal({ card, onClose, boardId }: CardModalProps) {
           )}
         </div>
 
+        {/* Comments Section */}
+        <div className="p-6 border-t border-[var(--border-primary)]">
+          <CommentSection cardId={card.cardId} />
+        </div>
+
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex items-center justify-between">
+        <div className="p-6 border-t border-[var(--border-primary)] flex items-center justify-between">
           <button
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition"
+            className="flex items-center gap-2 px-4 py-2 text-[var(--error)] hover:bg-[var(--error)] hover:bg-opacity-10 rounded-md transition"
           >
             <FiTrash2 />
             Excluir cartão
           </button>
-          <div className="text-sm text-gray-500">
-            Última atualização: {dayjs(card.updatedAt.toDate()).format('DD/MM/YYYY HH:mm')}
+          <div className="flex items-center gap-2 text-sm text-[var(--content-tertiary)]">
+            <MdAccessTime />
+            <span>Última atualização: {dayjs(card.updatedAt).format('DD/MM/YYYY HH:mm')}</span>
           </div>
         </div>
       </div>

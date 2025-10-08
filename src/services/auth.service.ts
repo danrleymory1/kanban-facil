@@ -6,8 +6,7 @@ import {
   User,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 
 // Criar novo usuário com email e senha
 export const registerUser = async (email: string, password: string, nome: string) => {
@@ -18,14 +17,16 @@ export const registerUser = async (email: string, password: string, nome: string
     // Atualizar o perfil do usuário com o nome
     await updateProfile(user, { displayName: nome });
 
-    // Criar documento do usuário no Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      userId: user.uid,
-      email: user.email,
-      nome,
-      isAnonymous: false,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+    // Criar documento do usuário no MongoDB via API
+    await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.uid,
+        email: user.email,
+        nome,
+        isAnonymous: false,
+      }),
     });
 
     return user;
@@ -67,15 +68,17 @@ export const getCurrentUser = (): User | null => {
   return auth.currentUser;
 };
 
-// Obter dados do usuário do Firestore
+// Obter dados do usuário do MongoDB
 export const getUserData = async (userId: string) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (userDoc.exists()) {
-      return userDoc.data();
+    const response = await fetch(`/api/users?userId=${userId}`);
+    if (!response.ok) {
+      // Retornar null ao invés de erro - o usuário será criado automaticamente
+      return null;
     }
-    return null;
+    return response.json();
   } catch (error) {
-    throw error;
+    console.warn('Erro ao buscar dados do usuário (será criado automaticamente):', error);
+    return null;
   }
 };

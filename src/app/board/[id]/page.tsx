@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { getBoard, getBoardLists, getBoardCards, updateList, updateCard, subscribeToBoardLists, subscribeToBoardCards } from '@/services/firestore.service';
+import { getBoard, getBoardLists, getBoardCards, updateList, updateCard, subscribeToBoardLists, subscribeToBoardCards } from '@/services/api.service';
 import { Board, List, Card } from '@/types';
 import { AiOutlineLoading3Quarters, AiOutlinePlus, AiOutlineArrowLeft } from 'react-icons/ai';
 import { FiSettings } from 'react-icons/fi';
-import { MdSprint } from 'react-icons/md';
+import { MdDirectionsRun } from 'react-icons/md';
 import Link from 'next/link';
 import BoardColumn from '@/components/BoardColumn';
 import AddListButton from '@/components/AddListButton';
 import CardModal from '@/components/CardModal';
+import ThemeToggle from '@/components/ThemeToggle';
+import BackButton from '@/components/BackButton';
 
 export default function BoardPage() {
   const { id } = useParams();
@@ -210,8 +212,8 @@ export default function BoardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--surface-primary)]">
+        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-[var(--primary)]" />
       </div>
     );
   }
@@ -221,34 +223,36 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-[var(--surface-secondary)]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="px-4 py-3 flex items-center justify-between">
+      <header className="bg-[var(--surface-primary)] shadow-sm border-b border-[var(--border-primary)]">
+        <div className="px-4 py-3 flex items-center justify-between gap-4">
+          <BackButton href="/dashboard" label="Dashboard" />
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="p-2 hover:bg-gray-100 rounded-md transition"
+              className="p-2 hover:bg-[var(--surface-secondary)] rounded-md transition"
             >
-              <AiOutlineArrowLeft className="text-xl text-gray-700" />
+              <AiOutlineArrowLeft className="text-xl text-[var(--content-primary)]" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{board.nome}</h1>
+              <h1 className="text-xl font-bold text-[var(--content-primary)]">{board.nome}</h1>
               {board.descricao && (
-                <p className="text-sm text-gray-600">{board.descricao}</p>
+                <p className="text-sm text-[var(--content-secondary)]">{board.descricao}</p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href={`/sprints/${boardId}`}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:opacity-90 transition"
             >
-              <MdSprint />
+              <MdDirectionsRun />
               <span>Sprints</span>
             </Link>
-            <button className="p-2 hover:bg-gray-100 rounded-md transition">
-              <FiSettings className="text-xl text-gray-700" />
+            <ThemeToggle />
+            <button className="p-2 hover:bg-[var(--surface-secondary)] rounded-md transition">
+              <FiSettings className="text-xl text-[var(--content-primary)]" />
             </button>
           </div>
         </div>

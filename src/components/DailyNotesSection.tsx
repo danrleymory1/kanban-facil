@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Sprint } from '@/types';
-import { addDailyNote } from '@/services/firestore.service';
+import { addDailyNote } from '@/services/api.service';
 import { AiOutlinePlus, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { FiCalendar, FiAlertCircle, FiFileText, FiUsers } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -232,12 +232,12 @@ export default function DailyNotesSection({ sprint, onUpdate }: DailyNotesSectio
       {sprint.dailyNotes && sprint.dailyNotes.length > 0 ? (
         <div className="space-y-4">
           {sprint.dailyNotes
-            .sort((a, b) => b.data.toMillis() - a.data.toMillis())
+            .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
             .map((note) => (
               <div key={note.noteId} className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                   <FiCalendar />
-                  <span>{dayjs(note.data.toDate()).format('DD/MM/YYYY HH:mm')}</span>
+                  <span>{dayjs(note.data).format('DD/MM/YYYY HH:mm')}</span>
                 </div>
 
                 {/* Notas */}

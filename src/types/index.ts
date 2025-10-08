@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase/firestore';
-
 // ========================================
 // ENUMS E TIPOS AUXILIARES
 // ========================================
@@ -34,9 +32,9 @@ export interface User {
   timezone?: string;
   preferences?: UserPreferences;
   isAnonymous: boolean;
-  ultimoAcesso?: Timestamp;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  ultimoAcesso?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -47,7 +45,7 @@ export interface BoardMembro {
   userId: string;
   nome: string;
   papel: PapelMembroType;
-  adicionadoEm: Timestamp;
+  adicionadoEm: Date;
 }
 
 export interface BoardSettings {
@@ -72,12 +70,12 @@ export interface Board {
   settings?: BoardSettings;
   favorito?: boolean;
   arquivado?: boolean;
-  dataConclusao?: Timestamp;
+  dataConclusao?: Date;
   progresso?: number; // 0-100
   sprintAtualId?: string;
   templatesUtilizados?: string[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -100,8 +98,8 @@ export interface List {
   cor?: string;
   settings?: ListSettings;
   arquivado?: boolean;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -115,8 +113,8 @@ export interface Comentario {
   userAvatar?: string;
   texto: string;
   mencionados?: string[];
-  createdAt: Timestamp;
-  editadoEm?: Timestamp;
+  createdAt: Date;
+  editadoEm?: Date;
 }
 
 export interface Anexo {
@@ -126,14 +124,14 @@ export interface Anexo {
   url: string;
   tamanho: number;
   uploadedBy: string;
-  uploadedAt: Timestamp;
+  uploadedAt: Date;
 }
 
 export interface Checklist {
   checklistId: string;
   titulo: string;
   itens: ChecklistItem[];
-  createdAt: Timestamp;
+  createdAt: Date;
 }
 
 export interface ChecklistItem {
@@ -141,7 +139,7 @@ export interface ChecklistItem {
   texto: string;
   concluido: boolean;
   responsavel?: string;
-  dataVencimento?: Timestamp;
+  dataVencimento?: Date;
   ordem: number;
 }
 
@@ -151,8 +149,8 @@ export interface Atividade {
   userName: string;
   tipo: 'criou' | 'moveu' | 'editou' | 'comentou' | 'anexou' | 'concluiu' | 'atribuiu';
   descricao: string;
-  detalhe?: any;
-  timestamp: Timestamp;
+  detalhe?: Record<string, unknown>;
+  timestamp: Date;
 }
 
 export interface TempoRegistrado {
@@ -161,7 +159,7 @@ export interface TempoRegistrado {
   userName: string;
   horas: number;
   descricao?: string;
-  data: Timestamp;
+  data: Date;
 }
 
 export interface Card {
@@ -186,10 +184,10 @@ export interface Card {
   cor?: string;
 
   // Datas e prazos
-  dataInicio?: Timestamp;
-  dataFim?: Timestamp;
-  dataVencimento?: Timestamp;
-  dataConclusao?: Timestamp;
+  dataInicio?: Date;
+  dataFim?: Date;
+  dataVencimento?: Date;
+  dataConclusao?: Date;
 
   // Estimativas e tracking
   estimativaHoras?: number;
@@ -218,8 +216,8 @@ export interface Card {
   concluido?: boolean;
   criadoPor: string;
   criadoPorNome?: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -231,7 +229,7 @@ export interface KnowledgeBaseVersao {
   conteudo: string;
   editadoPor: string;
   editadoPorNome: string;
-  timestamp: Timestamp;
+  timestamp: Date;
 }
 
 export interface KnowledgeBase {
@@ -264,10 +262,10 @@ export interface KnowledgeBase {
 
   // Estatísticas
   visualizacoes?: number;
-  ultimaVisualizacao?: Timestamp;
+  ultimaVisualizacao?: Date;
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -284,7 +282,7 @@ export interface SprintMetrics {
 }
 
 export interface BurndownPoint {
-  data: Timestamp;
+  data: Date;
   pontosRestantes: number;
   horasRestantes?: number;
 }
@@ -293,7 +291,7 @@ export interface SprintRetrospectiva {
   pontoPositivos: string[];
   pontosNegativos: string[];
   acoesParaMelhoria: string[];
-  realizadaEm?: Timestamp;
+  realizadaEm?: Date;
   participantes?: string[];
 }
 
@@ -308,10 +306,10 @@ export interface Sprint {
   descricao?: string;
 
   // Datas
-  dataInicio: Timestamp;
-  dataFim: Timestamp;
-  dataInicioReal?: Timestamp;
-  dataFimReal?: Timestamp;
+  dataInicio: Date;
+  dataFim: Date;
+  dataInicioReal?: Date;
+  dataFimReal?: Date;
 
   // Status
   status: StatusSprintType;
@@ -328,13 +326,13 @@ export interface Sprint {
   dailyNotes?: DailyNote[];
   retrospectiva?: SprintRetrospectiva;
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface DailyNote {
   noteId: string;
-  data: Timestamp;
+  data: Date;
   impedimentos: string[];
   notas: string[];
   participantes: string[];
@@ -370,14 +368,14 @@ export interface Task {
   storyPoints?: number;
 
   // Datas
-  dataVencimento?: Timestamp;
-  dataConclusao?: Timestamp;
+  dataVencimento?: Date;
+  dataConclusao?: Date;
 
   // Relacionamentos
   dependencias?: string[];
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -404,8 +402,8 @@ export interface Notification {
   remetente?: string;
   remetenteNome?: string;
 
-  createdAt: Timestamp;
-  lidaEm?: Timestamp;
+  createdAt: Date;
+  lidaEm?: Date;
 }
 
 // ========================================
@@ -432,8 +430,8 @@ export interface Template {
   vezesUtilizado: number;
   avaliacao?: number;
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface TemplateList {

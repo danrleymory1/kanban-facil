@@ -33,12 +33,13 @@ export default function ResetPasswordPage() {
     try {
       await resetPassword(data.email);
       setSuccess(true);
-    } catch (err: any) {
-      const errorMessage = err.code === 'auth/user-not-found'
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      const errorMessage = error.code === 'auth/user-not-found'
         ? 'Nenhum usuário encontrado com este email'
-        : err.code === 'auth/invalid-email'
+        : error.code === 'auth/invalid-email'
         ? 'Email inválido'
-        : err.code === 'auth/too-many-requests'
+        : error.code === 'auth/too-many-requests'
         ? 'Muitas tentativas. Tente novamente mais tarde'
         : 'Erro ao enviar email de recuperação';
       setError(errorMessage);

@@ -7,7 +7,7 @@ import { FiMoreHorizontal, FiTrash2, FiEdit2 } from 'react-icons/fi';
 import { AiOutlinePlus } from 'react-icons/ai';
 import BoardCard from './BoardCard';
 import AddCardForm from './AddCardForm';
-import { deleteList, updateList } from '@/services/firestore.service';
+import { deleteList, updateList } from '@/services/api.service';
 
 interface BoardColumnProps {
   list: List;

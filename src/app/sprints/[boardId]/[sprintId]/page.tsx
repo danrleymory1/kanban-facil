@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sprint, Card } from '@/types';
+import { Sprint, Card, StatusSprintType } from '@/types';
 import {
   getSprint,
   updateSprint,
   updateSprintMetrics,
   getBoardCards,
-} from '@/services/firestore.service';
+} from '@/services/api.service';
 import { AiOutlineArrowLeft, AiOutlineLoading3Quarters, AiOutlineEdit } from 'react-icons/ai';
 import { FiCalendar, FiTrendingUp, FiCheckCircle, FiTarget } from 'react-icons/fi';
-import { MdSprint } from 'react-icons/md';
+import { MdDirectionsRun } from 'react-icons/md';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import BurndownChart from '@/components/BurndownChart';
@@ -70,8 +70,8 @@ export default function SprintDetailPage() {
     if (!sprint) return;
 
     try {
-      await updateSprint(sprintId, { status: newStatus as any });
-      setSprint({ ...sprint, status: newStatus as any });
+      await updateSprint(sprintId, { status: newStatus as StatusSprintType });
+      setSprint({ ...sprint, status: newStatus as StatusSprintType });
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
     }
@@ -121,7 +121,7 @@ export default function SprintDetailPage() {
             </Link>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <MdSprint className="text-blue-600" />
+                <MdDirectionsRun className="text-blue-600" />
                 {sprint.nome}
                 {sprint.numero && (
                   <span className="text-gray-500 text-lg">#{sprint.numero}</span>
@@ -152,8 +152,8 @@ export default function SprintDetailPage() {
             <div className="flex items-center gap-2">
               <FiCalendar />
               <span>
-                {dayjs(sprint.dataInicio.toDate()).format('DD/MM/YYYY')} -{' '}
-                {dayjs(sprint.dataFim.toDate()).format('DD/MM/YYYY')}
+                {dayjs(sprint.dataInicio).format('DD/MM/YYYY')} -{' '}
+                {dayjs(sprint.dataFim).format('DD/MM/YYYY')}
               </span>
             </div>
 
@@ -269,7 +269,7 @@ export default function SprintDetailPage() {
                       className="bg-blue-600 h-3 rounded-full transition-all"
                       style={{
                         width: `${
-                          sprint.metrics?.totalPontos
+                          sprint.metrics?.totalPontos && sprint.metrics?.pontosCompletados
                             ? (sprint.metrics.pontosCompletados / sprint.metrics.totalPontos) *
                               100
                             : 0

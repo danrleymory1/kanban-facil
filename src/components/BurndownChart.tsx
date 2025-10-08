@@ -16,8 +16,8 @@ export default function BurndownChart({ sprint }: BurndownChartProps) {
     );
   }
 
-  const startDate = dayjs(sprint.dataInicio.toDate());
-  const endDate = dayjs(sprint.dataFim.toDate());
+  const startDate = dayjs(sprint.dataInicio);
+  const endDate = dayjs(sprint.dataFim);
   const today = dayjs();
   const totalDays = endDate.diff(startDate, 'day') + 1;
   const daysElapsed = today.diff(startDate, 'day') + 1;

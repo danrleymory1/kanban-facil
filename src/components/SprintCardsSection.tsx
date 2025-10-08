@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Sprint, Card } from '@/types';
-import { updateSprint, updateSprintMetrics } from '@/services/firestore.service';
+import { updateSprint, updateSprintMetrics } from '@/services/api.service';
 import { AiOutlinePlus, AiOutlineMinus, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { FiCheckCircle, FiClock } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -158,14 +158,14 @@ export default function SprintCardsSection({
                       {card.dataVencimento && (
                         <div
                           className={`flex items-center gap-1 ${
-                            dayjs(card.dataVencimento.toDate()).isBefore(dayjs()) &&
+                            dayjs(card.dataVencimento).isBefore(dayjs()) &&
                             card.status !== 'concluido'
                               ? 'text-red-600'
                               : 'text-gray-600'
                           }`}
                         >
                           <FiClock />
-                          <span>{dayjs(card.dataVencimento.toDate()).format('DD/MM/YYYY')}</span>
+                          <span>{dayjs(card.dataVencimento).format('DD/MM/YYYY')}</span>
                         </div>
                       )}
 
@@ -239,14 +239,14 @@ export default function SprintCardsSection({
                         {card.dataVencimento && (
                           <div
                             className={`flex items-center gap-1 ${
-                              dayjs(card.dataVencimento.toDate()).isBefore(dayjs()) &&
+                              dayjs(card.dataVencimento).isBefore(dayjs()) &&
                               card.status !== 'concluido'
                                 ? 'text-red-600'
                                 : 'text-gray-600'
                             }`}
                           >
                             <FiClock />
-                            <span>{dayjs(card.dataVencimento.toDate()).format('DD/MM/YYYY')}</span>
+                            <span>{dayjs(card.dataVencimento).format('DD/MM/YYYY')}</span>
                           </div>
                         )}
 

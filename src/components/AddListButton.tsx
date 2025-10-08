@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AiOutlinePlus, AiOutlineClose } from 'react-icons/ai';
-import { createList } from '@/services/firestore.service';
+import { createList } from '@/services/api.service';
 
 interface AddListButtonProps {
   boardId: string;

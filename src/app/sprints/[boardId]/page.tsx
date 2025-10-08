@@ -9,10 +9,10 @@ import {
   subscribeToBoardSprints,
   getBoard,
   deleteSprint,
-} from '@/services/firestore.service';
+} from '@/services/api.service';
 import { AiOutlineArrowLeft, AiOutlinePlus, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { FiCalendar, FiTrendingUp, FiCheckCircle } from 'react-icons/fi';
-import { MdSprint } from 'react-icons/md';
+import { MdDirectionsRun } from 'react-icons/md';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import CreateSprintModal from '@/components/CreateSprintModal';
@@ -127,7 +127,7 @@ export default function SprintsPage() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <MdSprint className="text-blue-600" />
+                  <MdDirectionsRun className="text-blue-600" />
                   Sprints - {board?.nome}
                 </h1>
                 <p className="text-sm text-gray-600">Gerenciamento de Sprints Scrum</p>
@@ -153,7 +153,7 @@ export default function SprintsPage() {
           </div>
         ) : sprints.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
-            <MdSprint className="mx-auto text-6xl text-gray-400 mb-4" />
+            <MdDirectionsRun className="mx-auto text-6xl text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum sprint encontrado</h3>
             <p className="text-gray-600 mb-6">Comece criando seu primeiro sprint</p>
             <button
@@ -203,8 +203,8 @@ export default function SprintsPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                     <FiCalendar />
                     <span>
-                      {dayjs(sprint.dataInicio.toDate()).format('DD/MM/YYYY')} -{' '}
-                      {dayjs(sprint.dataFim.toDate()).format('DD/MM/YYYY')}
+                      {dayjs(sprint.dataInicio).format('DD/MM/YYYY')} -{' '}
+                      {dayjs(sprint.dataFim).format('DD/MM/YYYY')}
                     </span>
                   </div>
 

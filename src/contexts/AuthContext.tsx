@@ -8,7 +8,7 @@ import { getUserData } from '@/services/auth.service';
 
 interface AuthContextType {
   user: User | null;
-  userData: any;
+  userData: Record<string, unknown> | null;
   loading: boolean;
 }
 
@@ -32,7 +32,7 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,12 +40,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // Buscar dados adicionais do usuário no Firestore
+        // Buscar dados adicionais do usuário (será criado automaticamente se não existir)
         try {
           const data = await getUserData(firebaseUser.uid);
           setUserData(data);
         } catch (error) {
-          console.error('Erro ao buscar dados do usuário:', error);
+          // Silenciar erro - o usuário será criado automaticamente pela API
+          setUserData(null);
         }
       } else {
         setUserData(null);

@@ -42,16 +42,17 @@ export default function LoginPage() {
         await loginUser(data.email, data.password);
       }
       router.push('/dashboard');
-    } catch (err: any) {
-      const errorMessage = err.code === 'auth/user-not-found'
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      const errorMessage = error.code === 'auth/user-not-found'
         ? 'Usuário não encontrado'
-        : err.code === 'auth/wrong-password'
+        : error.code === 'auth/wrong-password'
         ? 'Senha incorreta'
-        : err.code === 'auth/email-already-in-use'
+        : error.code === 'auth/email-already-in-use'
         ? 'Email já está em uso'
-        : err.code === 'auth/weak-password'
+        : error.code === 'auth/weak-password'
         ? 'Senha deve ter pelo menos 6 caracteres'
-        : err.code === 'auth/invalid-email'
+        : error.code === 'auth/invalid-email'
         ? 'Email inválido'
         : 'Erro ao fazer login/registro';
       setError(errorMessage);

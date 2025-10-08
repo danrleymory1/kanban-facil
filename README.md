@@ -5,7 +5,8 @@ Um sistema completo de gerenciamento de projetos inspirado no Trello, com funcio
 ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
-![Firebase](https://img.shields.io/badge/Firebase-12.3-orange)
+![MongoDB](https://img.shields.io/badge/MongoDB-6.20-green)
+![Firebase](https://img.shields.io/badge/Firebase%20Auth-12.3-orange)
 
 ## 🎯 Visão Geral
 
@@ -14,7 +15,8 @@ Um sistema completo de gerenciamento de projetos inspirado no Trello, com funcio
 - 📊 **Kanban Board** - Interface drag & drop similar ao Trello
 - 📚 **Knowledge Base** - Sistema de documentação estilo Obsidian
 - 🏃 **Scrum** - Ferramentas para metodologia ágil
-- 🔄 **Real-time** - Sincronização instantânea com Firebase
+- 🔄 **Real-time** - Sincronização com polling (MongoDB)
+- 🔐 **Autenticação** - Firebase Authentication
 
 ## ✨ Funcionalidades Implementadas
 
@@ -27,9 +29,9 @@ Um sistema completo de gerenciamento de projetos inspirado no Trello, com funcio
 
 ### ✅ Etapa 3: Estrutura do Banco de Dados
 - [x] Tipos TypeScript completos (450+ linhas)
-- [x] 9 coleções Firestore documentadas
-- [x] Regras de segurança robustas (300+ linhas)
-- [x] 28 índices compostos otimizados
+- [x] 6 collections MongoDB implementadas
+- [x] API REST completa (9 endpoints)
+- [x] Arquitetura em 3 camadas (Cliente → API → MongoDB)
 - [x] Documentação completa da estrutura
 
 ### ✅ Etapa 4: Interface Kanban Completa
@@ -78,7 +80,8 @@ Um sistema completo de gerenciamento de projetos inspirado no Trello, com funcio
 
 - Node.js 18+
 - npm ou yarn
-- Conta no Firebase
+- Conta no Firebase (apenas Auth)
+- MongoDB ou MongoDB Atlas (para banco de dados)
 
 ### Instalação
 
@@ -94,7 +97,9 @@ npm install
 
 # Configure as variáveis de ambiente
 cp .env.example .env
-# Edite .env com suas credenciais do Firebase
+# Edite .env com:
+# - Credenciais do Firebase (Auth)
+# - String de conexão MongoDB (MONGODB_URI)
 
 # Execute em modo de desenvolvimento
 npm run dev
@@ -103,23 +108,26 @@ npm run dev
 # http://localhost:3000
 ```
 
-### Configuração do Firebase
+### Configuração
 
-Siga o guia completo em [`FIREBASE_SETUP.md`](./FIREBASE_SETUP.md)
-
-Resumo:
+#### Firebase (Autenticação)
+Siga o guia em [`FIREBASE_SETUP.md`](./FIREBASE_SETUP.md):
 1. Crie um projeto no Firebase Console
-2. Habilite Authentication (Anônimo)
-3. Crie um banco Firestore
-4. Configure as variáveis no `.env`
-5. Deploy das regras: `firebase deploy --only firestore:rules`
-6. Deploy dos índices: `firebase deploy --only firestore:indexes`
+2. Habilite Authentication (Email/Senha e Anônimo)
+3. Configure as variáveis do Firebase no `.env`
+
+#### MongoDB (Banco de Dados)
+Siga o guia em [`MONGODB_SETUP.md`](./MONGODB_SETUP.md):
+1. Configure sua instância MongoDB ou use MongoDB Atlas
+2. Adicione a string de conexão `MONGODB_URI` no `.env`
+3. A aplicação criará automaticamente as collections necessárias
 
 ## 📚 Documentação
 
-### Guias de Uso
+### Guias de Configuração
+- [MONGODB_SETUP.md](./MONGODB_SETUP.md) - **⭐ Configuração MongoDB (Principal)**
+- [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) - Configuração Firebase Auth
 - [GUIA_DE_USO.md](./GUIA_DE_USO.md) - Como usar a aplicação
-- [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) - Configuração completa do Firebase
 
 ### Documentação Técnica
 - [DATABASE_STRUCTURE.md](./DATABASE_STRUCTURE.md) - Estrutura do banco de dados
@@ -127,10 +135,6 @@ Resumo:
 - [ETAPA3_RESUMO.md](./ETAPA3_RESUMO.md) - Resumo da estrutura do BD
 - [ETAPA4_RESUMO.md](./ETAPA4_RESUMO.md) - Resumo da interface Kanban
 - [ETAPA5_RESUMO.md](./ETAPA5_RESUMO.md) - Resumo das funcionalidades Scrum
-
-### Arquivos de Configuração
-- `firestore.rules` - Regras de segurança do Firestore
-- `firestore.indexes.json` - Índices compostos
 - `INSTRUCTIONS.md` - Instruções originais do projeto
 
 ## 🏗️ Arquitetura
@@ -139,27 +143,33 @@ Resumo:
 kanban-facil/
 ├── src/
 │   ├── app/                    # Páginas Next.js
+│   │   ├── api/               # 🆕 API Routes (Server)
+│   │   │   ├── boards/        # Endpoints de boards
+│   │   │   ├── lists/         # Endpoints de listas
+│   │   │   ├── cards/         # Endpoints de cards
+│   │   │   ├── sprints/       # Endpoints de sprints
+│   │   │   ├── users/         # Endpoints de usuários
+│   │   │   └── knowledge-base/ # Endpoints de KB
 │   │   ├── board/[id]/        # Página do board
 │   │   ├── dashboard/         # Dashboard de boards
 │   │   ├── login/             # Página de login
-│   │   └── page.tsx           # Página inicial
+│   │   └── sprints/           # Páginas de sprints
 │   ├── components/            # Componentes React
 │   │   ├── BoardColumn.tsx    # Coluna/Lista
 │   │   ├── BoardCard.tsx      # Card/Tarefa
 │   │   ├── CardModal.tsx      # Modal de detalhes
-│   │   ├── AddListButton.tsx  # Adicionar lista
-│   │   └── AddCardForm.tsx    # Formulário de card
+│   │   └── ...               # Outros componentes
 │   ├── contexts/              # React Context
 │   │   └── AuthContext.tsx    # Contexto de autenticação
 │   ├── lib/                   # Configurações
-│   │   └── firebase.ts        # Config do Firebase
+│   │   ├── firebase.ts        # 🔐 Config do Firebase Auth
+│   │   └── mongodb.ts         # 🆕 Cliente MongoDB
 │   ├── services/              # Serviços
-│   │   ├── auth.service.ts    # Autenticação
-│   │   └── firestore.service.ts # Firestore
+│   │   ├── auth.service.ts    # Autenticação Firebase
+│   │   ├── api.service.ts     # 🆕 Cliente HTTP (Browser)
+│   │   └── mongodb.service.ts # 🆕 MongoDB CRUD (Server)
 │   └── types/                 # Tipos TypeScript
 │       └── index.ts           # Tipos principais
-├── firestore.rules            # Regras de segurança
-├── firestore.indexes.json     # Índices do Firestore
 └── .env                       # Variáveis de ambiente
 ```
 
@@ -170,10 +180,10 @@ kanban-facil/
 - **[TypeScript 5](https://www.typescriptlang.org/)** - Tipagem estática
 - **[Tailwind CSS 4](https://tailwindcss.com/)** - Framework CSS
 
-### Firebase
-- **[Firebase Auth](https://firebase.google.com/docs/auth)** - Autenticação
-- **[Firestore](https://firebase.google.com/docs/firestore)** - Banco de dados NoSQL
-- **[Firebase Hosting](https://firebase.google.com/docs/hosting)** - Hospedagem (futuro)
+### Backend
+- **[MongoDB](https://www.mongodb.com/)** - Banco de dados NoSQL
+- **[Firebase Auth](https://firebase.google.com/docs/auth)** - Autenticação de usuários
+- **[Next.js API Routes](https://nextjs.org/docs/api-routes/introduction)** - Endpoints REST
 
 ### Bibliotecas
 - **[@hello-pangea/dnd](https://github.com/hello-pangea/dnd)** - Drag and Drop
@@ -190,11 +200,12 @@ kanban-facil/
 - Atualização otimista da UI
 - Persistência automática no Firestore
 
-### Real-time Sync
-- Mudanças aparecem instantaneamente
+### Sincronização de Dados
+- Polling automático a cada 2 segundos
 - Suporte a múltiplos usuários
-- Listeners automáticos com cleanup
-- Sem necessidade de refresh
+- Listeners com cleanup automático
+- Atualização otimista da UI
+- API REST completa
 
 ### UI/UX Polida
 - Design responsivo
@@ -205,15 +216,15 @@ kanban-facil/
 - Estados de loading
 
 ### Estrutura de Dados Completa
-- 9 coleções principais
+- 6 collections MongoDB
 - Relacionamentos bem definidos
-- Versionamento de documentos
-- Metadata completa
-- Histórico de atividades
+- Arquitetura Cliente-Servidor
+- API REST robusta
+- Metadata completa com timestamps
 
 ## 📊 Estrutura do Banco de Dados
 
-### Coleções Principais
+### Collections MongoDB
 
 ```typescript
 users          - Usuários do sistema
@@ -221,22 +232,20 @@ boards         - Quadros/Projetos
 lists          - Listas/Colunas do Kanban
 cards          - Cartões/Tarefas
 knowledgeBases - Base de conhecimento
-sprints        - Sprints Scrum
-tasks          - Tarefas detalhadas
-notifications  - Notificações
-templates      - Templates de boards
+sprints        - Sprints Scrum (com métricas)
 ```
 
 Veja mais em [DATABASE_STRUCTURE.md](./DATABASE_STRUCTURE.md)
 
 ## 🔐 Segurança
 
-- ✅ Autenticação obrigatória
-- ✅ Regras de segurança do Firestore
-- ✅ Validação de permissões
+- ✅ Autenticação Firebase obrigatória
+- ✅ API Routes server-side
+- ✅ Validação de inputs
 - ✅ Controle de acesso por papel (admin, editor, visualizador)
-- ✅ Sanitização de inputs
+- ✅ Sanitização de dados
 - ✅ Confirmação para ações destrutivas
+- 🔜 Rate limiting e validação de tokens JWT
 
 ## 📝 Licença
 
@@ -246,4 +255,4 @@ Este projeto está sob a licença MIT.
 
 **⭐ Kanban Fácil - Organize seus projetos de forma visual e eficiente!**
 
-Feito com Next.js, TypeScript, Tailwind CSS e Firebase 🚀
+Feito com Next.js, TypeScript, Tailwind CSS, MongoDB e Firebase Auth 🚀

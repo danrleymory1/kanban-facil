@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserBoards, createBoard, deleteBoard } from '@/services/firestore.service';
+import { getUserBoards, createBoard, deleteBoard } from '@/services/api.service';
 import { logoutUser } from '@/services/auth.service';
 import { Board } from '@/types';
 import { AiOutlineLoading3Quarters, AiOutlinePlus } from 'react-icons/ai';
 import { FiLogOut, FiTrash2 } from 'react-icons/fi';
-import { MdDashboard } from 'react-icons/md';
+import { MdDashboard, MdPeople, MdBook } from 'react-icons/md';
+import { HiViewBoards } from 'react-icons/hi';
+import { AiOutlineRocket } from 'react-icons/ai';
+import ThemeToggle from '@/components/ThemeToggle';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -86,28 +90,30 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--surface-primary)]">
+        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-[var(--primary)]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-[var(--surface-secondary)]">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-[var(--surface-primary)] shadow-sm border-b border-[var(--border-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <MdDashboard className="text-3xl text-blue-600 mr-3" />
-            <h1 className="text-2xl font-bold text-gray-900">Kanban Fácil</h1>
+            <MdDashboard className="text-3xl text-[var(--primary)] mr-3" />
+            <h1 className="text-2xl font-bold text-[var(--content-primary)]">Kanban Fácil</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-gray-700">
+            <span className="text-[var(--content-secondary)]">
               Olá, {user?.displayName || user?.email}
             </span>
+            <NotificationBell />
+            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition"
+              className="flex items-center gap-2 px-4 py-2 text-[var(--error)] hover:bg-[var(--surface-secondary)] rounded-md transition"
             >
               <FiLogOut />
               Sair
@@ -118,15 +124,54 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Meus Quadros</h2>
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <button
+            onClick={() => router.push('/knowledge-base')}
+            className="flex items-center gap-4 p-4 bg-[var(--surface-primary)] border-2 border-[var(--border-primary)] rounded-lg hover:border-[var(--primary)] hover:shadow-lg transition-all text-left group"
+          >
+            <div className="p-3 bg-[var(--primary-light)] rounded-lg">
+              <MdBook className="text-3xl text-[var(--primary)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--content-primary)] group-hover:text-[var(--primary)]">Base de Conhecimento</h3>
+              <p className="text-sm text-[var(--content-tertiary)]">Artigos e documentação</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/sprints/' + (boards[0]?.boardId || ''))}
+            disabled={boards.length === 0}
+            className="flex items-center gap-4 p-4 bg-[var(--surface-primary)] border-2 border-[var(--border-primary)] rounded-lg hover:border-[var(--success)] hover:shadow-lg transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="p-3 bg-[var(--success-light)] rounded-lg">
+              <AiOutlineRocket className="text-3xl text-[var(--success)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--content-primary)] group-hover:text-[var(--success)]">Sprints</h3>
+              <p className="text-sm text-[var(--content-tertiary)]">Gerenciar sprints Scrum</p>
+            </div>
+          </button>
+
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+            className="flex items-center gap-4 p-4 bg-[var(--surface-primary)] border-2 border-dashed border-[var(--border-secondary)] rounded-lg hover:border-[var(--primary)] hover:bg-[var(--surface-secondary)] transition-all text-left group"
           >
-            <AiOutlinePlus />
-            Novo Quadro
+            <div className="p-3 bg-[var(--surface-secondary)] rounded-lg">
+              <AiOutlinePlus className="text-3xl text-[var(--content-tertiary)] group-hover:text-[var(--primary)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--content-primary)] group-hover:text-[var(--primary)]">Novo Quadro</h3>
+              <p className="text-sm text-[var(--content-tertiary)]">Criar novo projeto</p>
+            </div>
           </button>
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <HiViewBoards className="text-3xl text-[var(--primary)]" />
+            <h2 className="text-2xl font-bold text-[var(--content-primary)]">Meus Quadros</h2>
+          </div>
         </div>
 
         {/* Boards Grid */}
@@ -134,28 +179,32 @@ export default function DashboardPage() {
           {boards.map((board) => (
             <div
               key={board.boardId}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer group"
+              className="bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer group"
             >
               <div
                 onClick={() => router.push(`/board/${board.boardId}`)}
                 className="p-6"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {board.nome}
-                </h3>
+                <div className="flex items-start gap-3 mb-3">
+                  <MdDashboard className="text-2xl text-[var(--primary)] mt-1" />
+                  <h3 className="text-xl font-semibold text-[var(--content-primary)] flex-1">
+                    {board.nome}
+                  </h3>
+                </div>
                 {board.descricao && (
-                  <p className="text-gray-600 text-sm mb-4">{board.descricao}</p>
+                  <p className="text-[var(--content-secondary)] text-sm mb-4">{board.descricao}</p>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">
-                    {board.membros?.length || 0} membro(s)
-                  </span>
+                  <div className="flex items-center gap-2 text-sm text-[var(--content-tertiary)]">
+                    <MdPeople className="text-lg" />
+                    <span>{board.membros?.length || 0} membro(s)</span>
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteBoard(board.boardId);
                     }}
-                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition"
+                    className="opacity-0 group-hover:opacity-100 text-[var(--error)] hover:opacity-80 transition"
                   >
                     <FiTrash2 />
                   </button>
@@ -167,12 +216,13 @@ export default function DashboardPage() {
 
         {boards.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">
+            <HiViewBoards className="text-6xl text-[var(--content-tertiary)] mx-auto mb-4" />
+            <p className="text-[var(--content-secondary)] mb-4">
               Você ainda não tem nenhum quadro.
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-[var(--primary)] hover:opacity-80 font-medium"
             >
               Criar seu primeiro quadro
             </button>
@@ -183,32 +233,32 @@ export default function DashboardPage() {
       {/* Create Board Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-[var(--content-primary)] mb-4">
               Criar Novo Quadro
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--content-secondary)] mb-1">
                   Nome do Quadro
                 </label>
                 <input
                   type="text"
                   value={newBoardName}
                   onChange={(e) => setNewBoardName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                   placeholder="Ex: Projeto Website"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--content-secondary)] mb-1">
                   Descrição (opcional)
                 </label>
                 <textarea
                   value={newBoardDesc}
                   onChange={(e) => setNewBoardDesc(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-[var(--surface-secondary)] border border-[var(--border-primary)] text-[var(--content-primary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                   placeholder="Descrição do quadro..."
                   rows={3}
                 />
@@ -221,14 +271,14 @@ export default function DashboardPage() {
                   setNewBoardName('');
                   setNewBoardDesc('');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition"
+                className="flex-1 px-4 py-2 border border-[var(--border-primary)] text-[var(--content-secondary)] rounded-md hover:bg-[var(--surface-secondary)] transition"
                 disabled={creating}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateBoard}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex-1 px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 disabled={!newBoardName.trim() || creating}
               >
                 {creating ? (

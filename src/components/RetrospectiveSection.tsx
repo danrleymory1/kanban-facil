@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Sprint } from '@/types';
-import { addRetrospective } from '@/services/firestore.service';
+import { addRetrospective } from '@/services/api.service';
 import { AiOutlinePlus, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { FiThumbsUp, FiThumbsDown, FiTrendingUp, FiUsers, FiCalendar } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -267,7 +267,7 @@ export default function RetrospectiveSection({ sprint, onUpdate }: Retrospective
                 <FiCalendar />
                 <span>
                   Realizada em:{' '}
-                  {dayjs(sprint.retrospectiva.realizadaEm.toDate()).format('DD/MM/YYYY HH:mm')}
+                  {dayjs(sprint.retrospectiva.realizadaEm).format('DD/MM/YYYY HH:mm')}
                 </span>
               </div>
             )}

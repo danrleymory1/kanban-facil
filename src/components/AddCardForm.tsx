@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AiOutlineClose } from 'react-icons/ai';
-import { createCard } from '@/services/firestore.service';
+import { createCard } from '@/services/api.service';
 
 interface AddCardFormProps {
   listId: string;

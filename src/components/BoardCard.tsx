@@ -2,7 +2,9 @@
 
 import { Draggable } from '@hello-pangea/dnd';
 import { Card } from '@/types';
-import { FiClock, FiCheckSquare, FiPaperclip, FiMessageSquare } from 'react-icons/fi';
+import { FiClock, FiCheckSquare, FiPaperclip, FiMessageSquare, FiAlertTriangle, FiArrowUp, FiMinus, FiArrowDown } from 'react-icons/fi';
+import { MdPlayCircleOutline, MdCheckCircle, MdRemoveRedEye, MdBlock } from 'react-icons/md';
+import { AiOutlineFileText } from 'react-icons/ai';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
@@ -20,30 +22,60 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
   const getPriorityColor = (prioridade: string) => {
     switch (prioridade) {
       case 'urgente':
-        return 'border-l-4 border-red-500';
+        return 'border-l-4 border-[var(--error)]';
       case 'alta':
-        return 'border-l-4 border-orange-500';
+        return 'border-l-4 border-[var(--warning)]';
       case 'media':
         return 'border-l-4 border-yellow-500';
       case 'baixa':
-        return 'border-l-4 border-green-500';
+        return 'border-l-4 border-[var(--success)]';
       default:
         return '';
+    }
+  };
+
+  const getPriorityIcon = (prioridade: string) => {
+    switch (prioridade) {
+      case 'urgente':
+        return <FiAlertTriangle className="text-[var(--error)]" />;
+      case 'alta':
+        return <FiArrowUp className="text-[var(--warning)]" />;
+      case 'media':
+        return <FiMinus className="text-yellow-500" />;
+      case 'baixa':
+        return <FiArrowDown className="text-[var(--success)]" />;
+      default:
+        return null;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'concluido':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[var(--success)] bg-opacity-10 text-[var(--success)]';
       case 'em-progresso':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-[var(--primary)] bg-opacity-10 text-[var(--primary)]';
       case 'em-revisao':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-500 bg-opacity-10 text-purple-700';
       case 'bloqueado':
-        return 'bg-red-100 text-red-800';
+        return 'bg-[var(--error)] bg-opacity-10 text-[var(--error)]';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[var(--surface-tertiary)] text-[var(--content-secondary)]';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return <MdCheckCircle className="text-sm" />;
+      case 'em-progresso':
+        return <MdPlayCircleOutline className="text-sm" />;
+      case 'em-revisao':
+        return <MdRemoveRedEye className="text-sm" />;
+      case 'bloqueado':
+        return <MdBlock className="text-sm" />;
+      default:
+        return null;
     }
   };
 
@@ -58,7 +90,7 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
   ) || 0;
 
   const isOverdue = card.dataVencimento &&
-    card.dataVencimento.toDate() < new Date() &&
+    new Date(card.dataVencimento) < new Date() &&
     card.status !== 'concluido';
 
   return (
@@ -69,7 +101,7 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`bg-white rounded-md shadow-sm hover:shadow-md transition-shadow cursor-pointer p-3 ${getPriorityColor(
+          className={`bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded-md shadow-sm hover:shadow-md transition-shadow cursor-pointer p-3 ${getPriorityColor(
             card.prioridade
           )} ${snapshot.isDragging ? 'shadow-2xl rotate-3' : ''}`}
         >
@@ -79,7 +111,7 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
               {card.tags.map((tag, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded"
+                  className="px-2 py-0.5 text-xs bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] rounded"
                 >
                   {tag}
                 </span>
@@ -87,34 +119,41 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
             </div>
           )}
 
-          {/* Título */}
-          <h4 className="text-sm font-medium text-gray-900 mb-2">{card.nome}</h4>
+          {/* Título com ícone de prioridade */}
+          <div className="flex items-start gap-2 mb-2">
+            {getPriorityIcon(card.prioridade)}
+            <h4 className="text-sm font-medium text-[var(--content-primary)] flex-1">{card.nome}</h4>
+          </div>
 
           {/* Descrição (preview) */}
           {card.descricao && (
-            <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-              {card.descricao}
-            </p>
+            <div className="flex items-start gap-1 mb-2">
+              <AiOutlineFileText className="text-[var(--content-tertiary)] text-xs mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-[var(--content-secondary)] line-clamp-2">
+                {card.descricao}
+              </p>
+            </div>
           )}
 
           {/* Status Badge */}
           <div className="mb-2">
-            <span className={`text-xs px-2 py-1 rounded ${getStatusColor(card.status)}`}>
+            <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 w-fit ${getStatusColor(card.status)}`}>
+              {getStatusIcon(card.status)}
               {card.status}
             </span>
           </div>
 
           {/* Metadata Icons */}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-[var(--content-tertiary)]">
             {/* Data de vencimento */}
             {card.dataVencimento && (
               <div
                 className={`flex items-center gap-1 ${
-                  isOverdue ? 'text-red-600 font-semibold' : ''
+                  isOverdue ? 'text-[var(--error)] font-semibold' : ''
                 }`}
               >
                 <FiClock />
-                <span>{dayjs(card.dataVencimento.toDate()).format('DD/MM')}</span>
+                <span>{dayjs(card.dataVencimento).format('DD/MM')}</span>
               </div>
             )}
 
@@ -123,7 +162,7 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
               <div
                 className={`flex items-center gap-1 ${
                   completedChecklistItems === totalChecklistItems
-                    ? 'text-green-600'
+                    ? 'text-[var(--success)]'
                     : ''
                 }`}
               >
@@ -154,10 +193,10 @@ export default function BoardCard({ card, index, onClick }: BoardCardProps) {
           {/* Responsável */}
           {card.responsavelNome && (
             <div className="mt-2 flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-6 h-6 bg-[var(--primary)] rounded-full flex items-center justify-center text-white text-xs font-semibold">
                 {card.responsavelNome.charAt(0).toUpperCase()}
               </div>
-              <span className="text-xs text-gray-600">{card.responsavelNome}</span>
+              <span className="text-xs text-[var(--content-secondary)]">{card.responsavelNome}</span>
             </div>
           )}
         </div>

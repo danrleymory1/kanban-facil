@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { createSprint } from '@/services/firestore.service';
+import { createSprint } from '@/services/api.service';
 import { AiOutlineClose, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { StatusSprintType } from '@/types';
 
@@ -63,8 +63,9 @@ export default function CreateSprintModal({ boardId, onClose }: CreateSprintModa
       });
 
       onClose();
-    } catch (err: any) {
-      setError('Erro ao criar sprint: ' + err.message);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError('Erro ao criar sprint: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
